@@ -7,17 +7,17 @@
 <style>
 body{
   margin:0;
-  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  background:#0b0b0b;
   font-family:Arial;
   color:#fff;
 }
-.chat-box{
-  max-width:450px;
-  margin:20px auto;
+.chat{
+  max-width:480px;
+  margin:15px auto;
   background:#111;
   border-radius:15px;
   overflow:hidden;
-  box-shadow:0 0 20px #000;
+  box-shadow:0 0 25px #000;
 }
 .header{
   background:#00ff88;
@@ -25,10 +25,6 @@ body{
   padding:14px;
   text-align:center;
   font-weight:bold;
-  font-size:18px;
-}
-.online{
-  font-size:13px;
 }
 #messages{
   height:380px;
@@ -41,29 +37,29 @@ body{
   padding:8px 10px;
   border-radius:10px;
   max-width:85%;
-  animation:fade .3s;
 }
-.me{
-  background:#00ff88;
-  color:#000;
-  margin-left:auto;
-}
-.other{
-  background:#1e1e1e;
-}
+.me{margin-left:auto;}
 .user{
   font-size:12px;
-  opacity:.8;
+  font-weight:bold;
+}
+.time{
+  font-size:10px;
+  opacity:.6;
+}
+.reply{
+  font-size:11px;
+  opacity:.7;
+  border-left:3px solid #00ff88;
+  padding-left:5px;
 }
 .footer{
   display:flex;
-  border-top:1px solid #222;
 }
 .footer input{
   flex:1;
   padding:14px;
   border:none;
-  outline:none;
 }
 .footer button{
   background:#00ff88;
@@ -72,52 +68,34 @@ body{
   font-weight:bold;
   cursor:pointer;
 }
-.name-box{
-  padding:20px;
+.admin{color:#ff0055;}
+.stats{
+  font-size:12px;
+  padding:5px;
+  background:#000;
   text-align:center;
-}
-.name-box input{
-  width:90%;
-  padding:12px;
-}
-.hidden{display:none;}
-
-@keyframes fade{
-  from{opacity:0;transform:translateY(5px)}
-  to{opacity:1}
 }
 </style>
 </head>
 
 <body>
 
-<div class="chat-box">
-  <div class="header">
-    💬 HIMOS Chat
-    <div class="online">🟢 المتصلين: <span id="online">0</span></div>
-  </div>
-
-  <div id="nameBox" class="name-box hidden">
-    <h3>اكتب اسمك للدخول</h3>
-    <input id="nameInput" placeholder="اسمك">
-    <br><br>
-    <button onclick="saveName()">دخول</button>
-  </div>
-
+<div class="chat">
+  <div class="header">💬 HIMOS Chat</div>
+  <div id="stats" class="stats" style="display:none;"></div>
   <div id="messages"></div>
-
   <div class="footer">
     <input id="msg" placeholder="اكتب رسالة محترمة...">
     <button onclick="send()">إرسال</button>
   </div>
 </div>
 
-<!-- Firebase -->
+<audio id="sound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
-// 🔴 Firebase Config
 var firebaseConfig = {
   apiKey: "AIzaSyBEazcwOjQFvTTvKP7C-LltEOnIlkF54x0",
   authDomain: "chat-ab546.firebaseapp.com",
@@ -129,92 +107,84 @@ var firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 
-var db = firebase.database();
-var chatRef = db.ref("chat");
-var onlineRef = db.ref("online");
+const db = firebase.database();
+const chatRef = db.ref("chat");
+const bansRef = db.ref("bans");
+const statsRef = db.ref("stats");
 
+const ADMIN = "HOMOS";
 const DAY = 86400000;
-
-// 🚫 نظام الحظر
-let strikes = localStorage.getItem("strikes") || 0;
-if(strikes >= 6){
-  document.body.innerHTML = "<h1 style='text-align:center;margin-top:100px'>🚫 تم حظرك نهائيًا من HIMOS Chat</h1>";
-  throw "BANNED";
-}
 
 // 🧠 الاسم
 let username = localStorage.getItem("chatName");
 if(!username){
-  document.getElementById("nameBox").classList.remove("hidden");
+  username = prompt("اكتب اسمك");
+  localStorage.setItem("chatName",username);
 }
 
-function saveName(){
-  let n = nameInput.value.trim();
-  if(n.length>=2){
-    localStorage.setItem("chatName",n);
-    location.reload();
-  }
+// 🎨 لون ثابت
+function color(name){
+  let hash=0;
+  for(let i=0;i<name.length;i++) hash=name.charCodeAt(i)+((hash<<5)-hash);
+  return `hsl(${hash%360},70%,60%)`;
 }
 
-// 🚫 كلمات ممنوعة
-let bannedWords = ["كلب","حمار","fuck","shit","كس","زب","لعنة","احا"];
-
-function checkBad(text){
-  let bad=false;
-  bannedWords.forEach(w=>{
-    let r=new RegExp(w,"gi");
-    if(r.test(text)) bad=true;
-    text=text.replace(r,"***");
-  });
-  if(bad){
-    strikes++;
-    localStorage.setItem("strikes",strikes);
-    alert("⚠️ تحذير: كلمات غير لائقة ("+strikes+"/6)");
+// 🚫 فحص الحظر
+bansRef.child(username).once("value",s=>{
+  if(s.exists() && Date.now()-s.val()<DAY){
+    document.body.innerHTML="<h2 style='text-align:center;margin-top:100px'>🚫 محظور 24 ساعة</h2>";
+  }else{
+    bansRef.child(username).remove();
   }
-  return {text,bad};
+});
+
+// ⏱️ وقت
+function timeAgo(t){
+  let d=(Date.now()-t)/1000;
+  if(d<60) return "الآن";
+  if(d<3600) return `منذ ${Math.floor(d/60)} دقيقة`;
+  return `منذ ${Math.floor(d/3600)} ساعة`;
 }
 
 // 📤 إرسال
 function send(){
-  let msg = document.getElementById("msg").value;
-  if(!msg || !username) return;
-
-  let result = checkBad(msg);
-  if(strikes>=6){
-    localStorage.setItem("strikes",6);
-    location.reload();
-    return;
-  }
-
+  let m=msg.value;
+  if(!m) return;
   chatRef.push({
     user: username,
-    text: result.text,
+    text: m,
     time: Date.now()
   });
+  statsRef.child("messages").transaction(n=>(n||0)+1);
   msg.value="";
 }
 
 // 📥 استقبال
-chatRef.on("child_added",snap=>{
+chatRef.limitToLast(100).on("child_added",snap=>{
   let d=snap.val();
-  if(Date.now()-d.time>DAY){
-    snap.ref.remove();
-    return;
-  }
-
   let div=document.createElement("div");
-  div.className="msg "+(d.user===username?"me":"other");
-  div.innerHTML=`<div class="user">${d.user}</div>${d.text}`;
+  div.className="msg "+(d.user===username?"me":"");
+  div.style.background=color(d.user);
+  div.innerHTML=`
+    <div class="user ${d.user===ADMIN?'admin':''}">
+      ${d.user===ADMIN?'👑 ':''}${d.user}
+    </div>
+    <div>${d.text}</div>
+    <div class="time">${timeAgo(d.time)}</div>
+  `;
   messages.appendChild(div);
   messages.scrollTop=messages.scrollHeight;
+  if(d.user!==username) sound.play();
 });
 
-// 🟢 متصلين
-let me = onlineRef.push(true);
-me.onDisconnect().remove();
-onlineRef.on("value",s=>{
-  online.innerText=s.numChildren();
-});
+// 📊 إحصائيات للأدمن
+if(username===ADMIN){
+  stats.style.display="block";
+  statsRef.on("value",s=>{
+    let m=s.val()?.messages||0;
+    stats.innerText=`📊 عدد الرسائل: ${m}`;
+  });
+}
 </script>
 
 </body>
