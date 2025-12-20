@@ -204,15 +204,14 @@ var firebaseConfig = {
   appId: "1:1096336837314:web:2abe8434e5ced8ca1a895b"
 };
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.database();
 const chatRef = db.ref("chat");
-const usersRef = db.ref("users");
-const bansRef = db.ref("bans");
 const statsRef = db.ref("stats");
+const bansRef = db.ref("bans");
 const onlineRef = db.ref("online");
-
 const ADMIN = "Mohamed Homos";
-const DAY = 10800000; // 3 ساعات بالمللي ثانية
+const THREE_HOURS = 10800000; // 3 ساعات
 
 // =================== USER ===================
 let username = localStorage.getItem("chatName");
@@ -221,19 +220,15 @@ if(!username){
   localStorage.setItem("chatName",username);
 }
 
-// اللون حسب الاسم
+// =================== COLORS & AVATAR ===================
 function color(name){
   let hash=0;
   for(let i=0;i<name.length;i++) hash=name.charCodeAt(i)+((hash<<5)-hash);
   return `hsl(${hash%360},70%,60%)`;
 }
-
-// =================== AVATAR ===================
 function avatarLetter(name){
   return name.charAt(0).toUpperCase();
 }
-
-// =================== TIME ===================
 function timeAgo(t){
   let d=(Date.now()-t)/1000;
   if(d<60) return "الآن";
@@ -243,10 +238,10 @@ function timeAgo(t){
 
 // =================== BANS ===================
 bansRef.child(username).once("value",s=>{
-  if(s.exists() && Date.now()-s.val()<DAY){
+  if(s.exists() && Date.now()-s.val()<THREE_HOURS){
     document.body.innerHTML="<h2 style='text-align:center;margin-top:100px'>🚫 تم حظرك لمدة 3 ساعات</h2>";
     throw "BANNED";
-  }else{
+  } else {
     bansRef.child(username).remove();
   }
 });
@@ -266,9 +261,8 @@ statsRef.child("users").once("value",s=>{
   if(!s.exists()) statsRef.child("users").set({});
 });
 
-// =================== SEND ===================
+// =================== SEND MESSAGE ===================
 let replyTo = null;
-
 function send(){
   let msgEl = document.getElementById("msg");
   let text = msgEl.value.trim();
@@ -289,16 +283,12 @@ function send(){
 // =================== CHAT ===================
 chatRef.limitToLast(200).on("child_added",snap=>{
   let d = snap.val();
-  if(Date.now()-d.time>DAY){
-    snap.ref.remove();
-    return;
-  }
+  if(Date.now()-d.time>THREE_HOURS) { snap.ref.remove(); return; }
 
   let div = document.createElement("div");
   div.className = "msg "+(d.user===username?"me":"");
 
   let avatar = `<div class="avatar" style="background:${color(d.user)}">${avatarLetter(d.user)}</div>`;
-  
   let replyBox = d.reply?`<div class="reply-box">↪ ${d.reply.user}: ${d.reply.text}</div>`:"";
 
   let adminButtons = "";
@@ -315,8 +305,8 @@ chatRef.limitToLast(200).on("child_added",snap=>{
     <button class="reply-btn" onclick="setReply('${d.user}',\`${d.text}\`)">رد</button>
   </div>`;
 
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
+  document.getElementById("messages").appendChild(div);
+  document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
 
   if(d.user!==username) document.getElementById("notif-sound").play();
 });
@@ -331,12 +321,8 @@ function setReply(user,text){
 }
 
 // =================== DELETE & BAN ===================
-function deleteMsg(key){
-  chatRef.child(key).remove();
-}
-function banUser(user){
-  bansRef.child(user).set(Date.now());
-}
+function deleteMsg(key){ chatRef.child(key).remove(); }
+function banUser(user){ bansRef.child(user).set(Date.now()); }
 
 // =================== TOP 3 USERS ===================
 statsRef.child("users").on("value",s=>{
@@ -345,8 +331,17 @@ statsRef.child("users").on("value",s=>{
   let arr = Object.keys(users).map(u=>({user:u,count:users[u]}));
   arr.sort((a,b)=>b.count-a.count);
   arr = arr.slice(0,3);
-  stats.innerHTML = "📊 أكثر 3 مستخدمين نشطين: "+arr.map(a=>`${a.user} (${a.count})`).join(", ");
+  document.getElementById("stats").innerHTML = "📊 أكثر 3 مستخدمين نشطين: "+arr.map(a=>`${a.user} (${a.count})`).join(", ");
 });
+
+// =================== REGISTER SERVICE WORKER ===================
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('firebase-messaging-sw.js')
+  .then(registration => {
+    console.log('Service Worker مسجل بنجاح');
+  })
+  .catch(err => console.error('فشل تسجيل Service Worker:', err));
+}
 </script>
 
 </body>
