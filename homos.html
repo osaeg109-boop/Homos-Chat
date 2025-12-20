@@ -5,6 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HIMOS Chat</title>
 
+<!-- أيقونة الموقع -->
+<link rel="icon" href="Logo.JPG" type="image/jpeg">
+
+<!-- إعدادات المشاركة (Open Graph) -->
+<meta property="og:title" content="HIMOS Chat">
+<meta property="og:description" content="أفضل شات للمحادثة الحية مع الجميع.">
+<meta property="og:image" content="Logo.JPG">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://yourwebsite.com">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="HIMOS Chat">
+<meta name="twitter:description" content="أفضل شات للمحادثة الحية مع الجميع.">
+<meta name="twitter:image" content="Logo.JPG">
+
 <style>
 body{
   margin:0;
@@ -31,6 +46,13 @@ body{
   font-weight:bold;
   text-align:center;
   position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.header img{
+  height:40px;
+  margin-right:10px;
 }
 .header .online{
   font-size:12px;
@@ -125,6 +147,7 @@ button.admin-btn{
 
 <div class="chat">
   <div class="header">
+    <img src="Logo.JPG" alt="HIMOS Chat Logo">
     💬 HIMOS Chat
     <span class="online">🟢 المتصلين: <span id="online">0</span></span>
   </div>
