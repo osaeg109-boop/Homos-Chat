@@ -2,22 +2,77 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HOMOS Chat</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#0f0f0f;color:#fff}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#0f0f0f;
+  color:#fff;
+}
 .hidden{display:none}
-.page{padding:15px;padding-bottom:80px}
-input,button{width:100%;padding:12px;margin:5px 0;border-radius:8px;border:none}
-button{background:#00ff88;font-weight:bold;cursor:pointer}
-.friend,.msg{background:#222;padding:10px;margin:6px 0;border-radius:8px}
-.me{background:#00ff88;color:#000}
-.online{color:#00ff88;font-size:12px}
-.offline{color:#aaa;font-size:12px}
-.admin{color:red;font-size:12px;cursor:pointer}
-.nav{position:fixed;bottom:0;width:100%;display:flex;background:#000}
-.nav div{flex:1;text-align:center;padding:10px;color:#aaa}
-.nav .active{color:#00ff88}
+.page{
+  padding:15px;
+  padding-bottom:90px;
+}
+h2,h3{text-align:center}
+input,button{
+  width:100%;
+  padding:14px;
+  margin:8px 0;
+  border-radius:12px;
+  border:none;
+  font-size:16px;
+}
+input{background:#222;color:#fff}
+button{
+  background:#00ff88;
+  font-weight:bold;
+  cursor:pointer;
+}
+button:active{opacity:.8}
+
+.friend,.msg{
+  background:#1e1e1e;
+  padding:12px;
+  margin:6px 0;
+  border-radius:12px;
+}
+.me{
+  background:#00ff88;
+  color:#000;
+}
+.online{color:#00ff88;font-size:13px}
+.offline{color:#aaa;font-size:13px}
+
+.nav{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  height:70px;
+  background:#000;
+  display:flex;
+  border-top:1px solid #222;
+}
+.nav div{
+  flex:1;
+  text-align:center;
+  padding-top:10px;
+  font-size:14px;
+  color:#aaa;
+}
+.nav div.active{color:#00ff88}
+.nav div span{display:block;font-size:22px}
+
+.error{
+  color:#ff5555;
+  text-align:center;
+  margin-top:10px;
+  font-size:14px;
+}
 </style>
 </head>
 
@@ -25,50 +80,51 @@ button{background:#00ff88;font-weight:bold;cursor:pointer}
 
 <!-- AUTH -->
 <div id="auth" class="page">
-<h2>تسجيل / دخول</h2>
-<input id="name" placeholder="الاسم">
-<input id="email" placeholder="البريد الإلكتروني">
-<input id="pass" type="password" placeholder="كلمة المرور">
-<button onclick="register()">تسجيل</button>
-<button onclick="login()">دخول</button>
+  <h2>🔐 HOMOS Chat</h2>
+  <input id="name" placeholder="الاسم">
+  <input id="email" placeholder="البريد الإلكتروني">
+  <input id="pass" type="password" placeholder="كلمة المرور">
+  <button onclick="register()">إنشاء حساب</button>
+  <button onclick="login()">تسجيل دخول</button>
+  <div id="authError" class="error"></div>
 </div>
 
 <!-- HOME -->
 <div id="home" class="page hidden">
-<h2>🏠 الرئيسية</h2>
-<input id="friendEmail" placeholder="إضافة صديق بالبريد">
-<button onclick="addFriend()">➕ إضافة صديق</button>
-<div id="friends"></div>
+  <h3>🏠 الرئيسية</h3>
+  <input id="friendEmail" placeholder="إضافة صديق بالبريد الإلكتروني">
+  <button onclick="addFriend()">➕ إضافة صديق</button>
+  <div id="friends"></div>
 </div>
 
 <!-- PUBLIC CHAT -->
 <div id="public" class="page hidden">
-<h2>🌍 HOMOS Chat</h2>
-<div id="publicMsgs"></div>
-<input id="publicInput" placeholder="اكتب رسالة عامة">
-<button onclick="sendPublic()">إرسال</button>
+  <h3>🌍 HOMOS Chat</h3>
+  <div id="publicMsgs"></div>
+  <input id="publicInput" placeholder="اكتب رسالة عامة">
+  <button onclick="sendPublic()">إرسال</button>
 </div>
 
 <!-- PRIVATE CHAT -->
 <div id="chat" class="page hidden">
-<h3 id="chatTitle"></h3>
-<div id="messages"></div>
-<input id="msg" placeholder="اكتب رسالة">
-<button onclick="sendPrivate()">إرسال</button>
+  <h3 id="chatTitle"></h3>
+  <div id="messages"></div>
+  <input id="msg" placeholder="اكتب رسالة">
+  <button onclick="sendPrivate()">إرسال</button>
 </div>
 
 <!-- PROFILE -->
 <div id="profile" class="page hidden">
-<h2>👤 البروفايل</h2>
-<p id="info"></p>
-<button onclick="logout()">تسجيل خروج</button>
+  <h3>👤 البروفايل</h3>
+  <p id="info"></p>
+  <button onclick="logout()">تسجيل خروج</button>
 </div>
 
 <!-- NAV -->
 <div class="nav">
-<div onclick="nav('home')">🏠</div>
-<div onclick="nav('public')">🌍</div>
-<div onclick="nav('profile')">👤</div>
+  <div onclick="nav('home')"><span>🏠</span>الرئيسية</div>
+  <div onclick="nav('public')"><span>🌍</span>العام</div>
+  <div onclick="nav('profile')"><span>👤</span>حسابي</div>
 </div>
 
 <audio id="sound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
@@ -78,6 +134,7 @@ button{background:#00ff88;font-weight:bold;cursor:pointer}
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
+// FIREBASE
 firebase.initializeApp({
  apiKey:"AIzaSyBEazcwOjQFvTTvKP7C-LltEOnIlkF54x0",
  authDomain:"chat-ab546.firebaseapp.com",
@@ -91,21 +148,39 @@ const ADMIN="ahmedfouad01278837444@gmail.com";
 const BAN=3*60*60*1000;
 let currentChat=null;
 
-// AUTH
+// REGISTER
 function register(){
- auth.createUserWithEmailAndPassword(email.value,pass.value).then(u=>{
-  db.ref("users/"+u.user.uid).set({
-   name:name.value,email:email.value,lastSeen:Date.now()
+ const n=name.value.trim();
+ const e=email.value.trim();
+ const p=pass.value.trim();
+ if(!n||!e||!p){
+  authError.innerText="⚠️ أكمل جميع الحقول";
+  return;
+ }
+ auth.createUserWithEmailAndPassword(e,p)
+ .then(res=>{
+  db.ref("users/"+res.user.uid).set({
+   name:n,email:e,lastSeen:Date.now()
   });
- });
+  authError.innerText="";
+ })
+ .catch(err=>authError.innerText=err.message);
 }
-function login(){auth.signInWithEmailAndPassword(email.value,pass.value);}
-function logout(){auth.signOut();}
+
+// LOGIN
+function login(){
+ auth.signInWithEmailAndPassword(email.value,pass.value)
+ .catch(err=>authError.innerText=err.message);
+}
+
+// LOGOUT
+function logout(){auth.signOut()}
 
 // STATE
 auth.onAuthStateChanged(u=>{
  if(!u){showAuth();return;}
  show("home");
+ info.innerText=u.email;
  db.ref("online/"+u.uid).set(true);
  db.ref("online/"+u.uid).onDisconnect().remove();
  db.ref("users/"+u.uid+"/lastSeen").onDisconnect().set(Date.now());
@@ -115,7 +190,9 @@ auth.onAuthStateChanged(u=>{
 
 // FRIENDS
 function addFriend(){
- db.ref("users").orderByChild("email").equalTo(friendEmail.value).once("value",s=>{
+ const fe=friendEmail.value.trim();
+ if(!fe)return;
+ db.ref("users").orderByChild("email").equalTo(fe).once("value",s=>{
   s.forEach(u=>{
    db.ref("friends/"+auth.currentUser.uid+"/"+u.key).set(true);
    db.ref("friends/"+u.key+"/"+auth.currentUser.uid).set(true);
@@ -127,22 +204,22 @@ function addFriend(){
 function loadFriends(){
  friends.innerHTML="";
  db.ref("friends/"+auth.currentUser.uid).on("child_added",s=>{
-  let uid=s.key;
+  const uid=s.key;
   db.ref("users/"+uid).once("value",u=>{
    db.ref("online/"+uid).once("value",o=>{
-    let div=document.createElement("div");
-    div.className="friend";
-    div.innerHTML=`<b>${u.val().name}</b><br>
+    const d=document.createElement("div");
+    d.className="friend";
+    d.innerHTML=`<b>${u.val().name}</b><br>
     ${o.exists()?'<span class="online">🟢 متصل الآن</span>':
-    '<span class="offline">آخر ظهور: '+new Date(u.val().lastSeen).toLocaleTimeString()+'</span>'}`;
-    div.onclick=()=>openPrivate(uid,u.val().name);
-    friends.appendChild(div);
+    '<span class="offline">آخر ظهور '+new Date(u.val().lastSeen).toLocaleTimeString()+'</span>'}`;
+    d.onclick=()=>openPrivate(uid,u.val().name);
+    friends.appendChild(d);
    });
   });
  });
 }
 
-// PRIVATE CHAT
+// PRIVATE
 function openPrivate(uid,name){
  currentChat=[auth.currentUser.uid,uid].sort().join("_");
  chatTitle.innerText=name;
@@ -150,16 +227,17 @@ function openPrivate(uid,name){
  messages.innerHTML="";
  db.ref("private/"+currentChat).off();
  db.ref("private/"+currentChat).on("child_added",s=>{
-  let d=s.val();
-  let div=document.createElement("div");
-  div.className="msg "+(d.uid===auth.currentUser.uid?"me":"");
-  div.innerText=d.text;
-  messages.appendChild(div);
+  const d=s.val();
+  const m=document.createElement("div");
+  m.className="msg "+(d.uid===auth.currentUser.uid?"me":"");
+  m.innerText=d.text;
+  messages.appendChild(m);
   if(d.uid!==auth.currentUser.uid) sound.play();
  });
 }
 
 function sendPrivate(){
+ if(!msg.value)return;
  checkBan(()=>{
   db.ref("private/"+currentChat).push({
    uid:auth.currentUser.uid,text:msg.value,time:Date.now()
@@ -168,23 +246,21 @@ function sendPrivate(){
  });
 }
 
-// PUBLIC CHAT
+// PUBLIC
 function loadPublic(){
  publicMsgs.innerHTML="";
  db.ref("public").limitToLast(50).on("child_added",s=>{
-  let d=s.val();
-  let div=document.createElement("div");
-  div.className="msg";
-  div.innerHTML=`<b>${d.name}</b>: ${d.text}`;
-  if(auth.currentUser.email===ADMIN){
-   div.innerHTML+=` <span class="admin" onclick="ban('${d.uid}')">[حظر]</span>`;
-  }
-  publicMsgs.appendChild(div);
+  const d=s.val();
+  const m=document.createElement("div");
+  m.className="msg";
+  m.innerHTML=`<b>${d.name}</b>: ${d.text}`;
+  publicMsgs.appendChild(m);
   if(d.uid!==auth.currentUser.uid) sound.play();
  });
 }
 
 function sendPublic(){
+ if(!publicInput.value)return;
  checkBan(()=>{
   db.ref("users/"+auth.currentUser.uid).once("value",u=>{
    db.ref("public").push({
@@ -199,11 +275,10 @@ function sendPublic(){
 }
 
 // BAN
-function ban(uid){db.ref("bans/"+uid).set(Date.now());}
 function checkBan(cb){
  db.ref("bans/"+auth.currentUser.uid).once("value",s=>{
   if(s.exists() && Date.now()-s.val()<BAN){
-   alert("🚫 محظور 3 ساعات");
+   alert("🚫 محظور مؤقتًا");
   }else{
    db.ref("bans/"+auth.currentUser.uid).remove();
    cb();
