@@ -7,72 +7,23 @@
 
 <style>
 *{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:#0f0f0f;
-  color:#fff;
-}
+body{margin:0;font-family:Arial,sans-serif;background:#0f0f0f;color:#fff;}
+.page{padding:15px;padding-bottom:90px}
 .hidden{display:none}
-.page{
-  padding:15px;
-  padding-bottom:90px;
-}
-h2,h3{text-align:center}
-input,button{
-  width:100%;
-  padding:14px;
-  margin:8px 0;
-  border-radius:12px;
-  border:none;
-  font-size:16px;
-}
+h2,h3{text-align:center;margin:10px 0;}
+input,button{width:100%;padding:14px;margin:8px 0;border-radius:12px;border:none;font-size:16px;}
 input{background:#222;color:#fff}
-button{
-  background:#00ff88;
-  font-weight:bold;
-  cursor:pointer;
-}
+button{background:#00ff88;font-weight:bold;cursor:pointer;}
 button:active{opacity:.8}
-
-.friend,.msg{
-  background:#1e1e1e;
-  padding:12px;
-  margin:6px 0;
-  border-radius:12px;
-}
-.me{
-  background:#00ff88;
-  color:#000;
-}
+.friend,.msg{background:#1e1e1e;padding:12px;margin:6px 0;border-radius:12px;}
+.me{background:#00ff88;color:#000}
 .online{color:#00ff88;font-size:13px}
 .offline{color:#aaa;font-size:13px}
-
-.nav{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  height:70px;
-  background:#000;
-  display:flex;
-  border-top:1px solid #222;
-}
-.nav div{
-  flex:1;
-  text-align:center;
-  padding-top:10px;
-  font-size:14px;
-  color:#aaa;
-}
+.nav{position:fixed;bottom:0;width:100%;height:70px;background:#000;display:flex;border-top:1px solid #222;}
+.nav div{flex:1;text-align:center;padding-top:10px;font-size:14px;color:#aaa}
 .nav div.active{color:#00ff88}
 .nav div span{display:block;font-size:22px}
-
-.error{
-  color:#ff5555;
-  text-align:center;
-  margin-top:10px;
-  font-size:14px;
-}
+.error{color:#ff5555;text-align:center;margin-top:10px;font-size:14px;}
 </style>
 </head>
 
@@ -86,6 +37,7 @@ button:active{opacity:.8}
   <input id="pass" type="password" placeholder="كلمة المرور">
   <button onclick="register()">إنشاء حساب</button>
   <button onclick="login()">تسجيل دخول</button>
+  <button style="background:none;color:#00ff88" onclick="resetPassword()">هل نسيت كلمة المرور؟</button>
   <div id="authError" class="error"></div>
 </div>
 
@@ -134,7 +86,7 @@ button:active{opacity:.8}
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
-// FIREBASE
+// Firebase config
 firebase.initializeApp({
  apiKey:"AIzaSyBEazcwOjQFvTTvKP7C-LltEOnIlkF54x0",
  authDomain:"chat-ab546.firebaseapp.com",
@@ -150,31 +102,30 @@ let currentChat=null;
 
 // REGISTER
 function register(){
- const n=name.value.trim();
- const e=email.value.trim();
- const p=pass.value.trim();
- if(!n||!e||!p){
-  authError.innerText="⚠️ أكمل جميع الحقول";
-  return;
- }
+ const n=document.getElementById("name").value.trim();
+ const e=document.getElementById("email").value.trim();
+ const p=document.getElementById("pass").value.trim();
+ if(!n||!e||!p){authError.innerText="⚠️ أكمل جميع الحقول";return;}
  auth.createUserWithEmailAndPassword(e,p)
- .then(res=>{
-  db.ref("users/"+res.user.uid).set({
-   name:n,email:e,lastSeen:Date.now()
-  });
-  authError.innerText="";
- })
+ .then(res=>db.ref("users/"+res.user.uid).set({name:n,email:e,lastSeen:Date.now()}))
+ .then(()=>authError.innerText="")
  .catch(err=>authError.innerText=err.message);
 }
 
 // LOGIN
-function login(){
- auth.signInWithEmailAndPassword(email.value,pass.value)
+function login(){auth.signInWithEmailAndPassword(email.value,pass.value).catch(err=>authError.innerText=err.message);}
+
+// RESET PASSWORD
+function resetPassword(){
+ const e=document.getElementById("email").value.trim();
+ if(!e){authError.innerText="✉️ اكتب بريدك الإلكتروني أولًا";return;}
+ auth.sendPasswordResetEmail(e)
+ .then(()=>authError.innerText="✅ تم إرسال رابط إعادة التعيين على الإيميل")
  .catch(err=>authError.innerText=err.message);
 }
 
 // LOGOUT
-function logout(){auth.signOut()}
+function logout(){auth.signOut();}
 
 // STATE
 auth.onAuthStateChanged(u=>{
@@ -190,7 +141,7 @@ auth.onAuthStateChanged(u=>{
 
 // FRIENDS
 function addFriend(){
- const fe=friendEmail.value.trim();
+ const fe=document.getElementById("friendEmail").value.trim();
  if(!fe)return;
  db.ref("users").orderByChild("email").equalTo(fe).once("value",s=>{
   s.forEach(u=>{
@@ -198,9 +149,8 @@ function addFriend(){
    db.ref("friends/"+u.key+"/"+auth.currentUser.uid).set(true);
   });
  });
- friendEmail.value="";
+ document.getElementById("friendEmail").value="";
 }
-
 function loadFriends(){
  friends.innerHTML="";
  db.ref("friends/"+auth.currentUser.uid).on("child_added",s=>{
@@ -209,9 +159,7 @@ function loadFriends(){
    db.ref("online/"+uid).once("value",o=>{
     const d=document.createElement("div");
     d.className="friend";
-    d.innerHTML=`<b>${u.val().name}</b><br>
-    ${o.exists()?'<span class="online">🟢 متصل الآن</span>':
-    '<span class="offline">آخر ظهور '+new Date(u.val().lastSeen).toLocaleTimeString()+'</span>'}`;
+    d.innerHTML=`<b>${u.val().name}</b><br>${o.exists()?'<span class="online">🟢 متصل الآن</span>':'<span class="offline">آخر ظهور '+new Date(u.val().lastSeen).toLocaleTimeString()+'</span>'}`;
     d.onclick=()=>openPrivate(uid,u.val().name);
     friends.appendChild(d);
    });
@@ -219,7 +167,7 @@ function loadFriends(){
  });
 }
 
-// PRIVATE
+// PRIVATE CHAT
 function openPrivate(uid,name){
  currentChat=[auth.currentUser.uid,uid].sort().join("_");
  chatTitle.innerText=name;
@@ -235,18 +183,12 @@ function openPrivate(uid,name){
   if(d.uid!==auth.currentUser.uid) sound.play();
  });
 }
-
 function sendPrivate(){
  if(!msg.value)return;
- checkBan(()=>{
-  db.ref("private/"+currentChat).push({
-   uid:auth.currentUser.uid,text:msg.value,time:Date.now()
-  });
-  msg.value="";
- });
+ checkBan(()=>{db.ref("private/"+currentChat).push({uid:auth.currentUser.uid,text:msg.value,time:Date.now()}); msg.value="";});
 }
 
-// PUBLIC
+// PUBLIC CHAT
 function loadPublic(){
  publicMsgs.innerHTML="";
  db.ref("public").limitToLast(50).on("child_added",s=>{
@@ -258,31 +200,19 @@ function loadPublic(){
   if(d.uid!==auth.currentUser.uid) sound.play();
  });
 }
-
 function sendPublic(){
  if(!publicInput.value)return;
- checkBan(()=>{
-  db.ref("users/"+auth.currentUser.uid).once("value",u=>{
-   db.ref("public").push({
-    uid:auth.currentUser.uid,
-    name:u.val().name,
-    text:publicInput.value,
-    time:Date.now()
-   });
-   publicInput.value="";
-  });
- });
+ checkBan(()=>{db.ref("users/"+auth.currentUser.uid).once("value",u=>{
+  db.ref("public").push({uid:auth.currentUser.uid,name:u.val().name,text:publicInput.value,time:Date.now()});
+  publicInput.value="";
+ });});
 }
 
 // BAN
 function checkBan(cb){
  db.ref("bans/"+auth.currentUser.uid).once("value",s=>{
-  if(s.exists() && Date.now()-s.val()<BAN){
-   alert("🚫 محظور مؤقتًا");
-  }else{
-   db.ref("bans/"+auth.currentUser.uid).remove();
-   cb();
-  }
+  if(s.exists() && Date.now()-s.val()<BAN){alert("🚫 محظور مؤقتًا");}
+  else{db.ref("bans/"+auth.currentUser.uid).remove(); cb();}
  });
 }
 
@@ -296,13 +226,7 @@ function show(p){
  profile.classList.add("hidden");
  document.getElementById(p).classList.remove("hidden");
 }
-function showAuth(){
- auth.classList.remove("hidden");
- home.classList.add("hidden");
- public.classList.add("hidden");
- chat.classList.add("hidden");
- profile.classList.add("hidden");
-}
+function showAuth(){auth.classList.remove("hidden");home.classList.add("hidden");public.classList.add("hidden");chat.classList.add("hidden");profile.classList.add("hidden");}
 </script>
 
 </body>
