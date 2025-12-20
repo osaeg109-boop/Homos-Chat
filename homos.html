@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HOMOS Chat</title>
-
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#0f0f0f;color:#fff;}
@@ -15,18 +14,18 @@ input,button{width:100%;padding:14px;margin:8px 0;border-radius:12px;border:none
 input{background:#222;color:#fff}
 button{background:#00ff88;font-weight:bold;cursor:pointer;}
 button:active{opacity:.8}
-.friend,.msg{background:#1e1e1e;padding:12px;margin:6px 0;border-radius:12px;}
+.friend,.msg{background:#1e1e1e;padding:12px;margin:6px 0;border-radius:12px;word-break:break-word;}
 .me{background:#00ff88;color:#000}
 .online{color:#00ff88;font-size:13px}
 .offline{color:#aaa;font-size:13px}
 .nav{position:fixed;bottom:0;width:100%;height:70px;background:#000;display:flex;border-top:1px solid #222;}
-.nav div{flex:1;text-align:center;padding-top:10px;font-size:14px;color:#aaa}
+.nav div{flex:1;text-align:center;padding-top:10px;font-size:14px;color:#aaa;cursor:pointer;}
 .nav div.active{color:#00ff88}
 .nav div span{display:block;font-size:22px}
 .error{color:#ff5555;text-align:center;margin-top:10px;font-size:14px;}
+.avatar{width:30px;height:30px;border-radius:50%;display:inline-block;text-align:center;line-height:30px;margin-right:8px;font-weight:bold;color:#fff;}
 </style>
 </head>
-
 <body>
 
 <!-- AUTH -->
@@ -35,9 +34,9 @@ button:active{opacity:.8}
   <input id="name" placeholder="الاسم">
   <input id="email" placeholder="البريد الإلكتروني">
   <input id="pass" type="password" placeholder="كلمة المرور">
-  <button onclick="register()">إنشاء حساب</button>
-  <button onclick="login()">تسجيل دخول</button>
-  <button style="background:none;color:#00ff88" onclick="resetPassword()">هل نسيت كلمة المرور؟</button>
+  <button id="registerBtn">إنشاء حساب</button>
+  <button id="loginBtn">تسجيل دخول</button>
+  <button style="background:none;color:#00ff88" id="forgotBtn">هل نسيت كلمة المرور؟</button>
   <div id="authError" class="error"></div>
 </div>
 
@@ -100,8 +99,12 @@ const ADMIN="ahmedfouad01278837444@gmail.com";
 const BAN=3*60*60*1000;
 let currentChat=null;
 
+// HELPER COLORS
+function getColor(uid){return "#"+((Math.abs(hashCode(uid))%0xFFFFFF).toString(16).padStart(6,"0"));}
+function hashCode(str){let h=0;for(let i=0;i<str.length;i++){h=str.charCodeAt(i)+((h<<5)-h);}return h;}
+
 // REGISTER
-function register(){
+document.getElementById("registerBtn").addEventListener("click",function(){
  const n=document.getElementById("name").value.trim();
  const e=document.getElementById("email").value.trim();
  const p=document.getElementById("pass").value.trim();
@@ -110,24 +113,33 @@ function register(){
  .then(res=>db.ref("users/"+res.user.uid).set({name:n,email:e,lastSeen:Date.now()}))
  .then(()=>authError.innerText="")
  .catch(err=>authError.innerText=err.message);
-}
+});
 
 // LOGIN
-function login(){auth.signInWithEmailAndPassword(email.value,pass.value).catch(err=>authError.innerText=err.message);}
+document.getElementById("loginBtn").addEventListener("click",function(){
+ const e=document.getElementById("email").value.trim();
+ const p=document.getElementById("pass").value.trim();
+ if(!e||!p){authError.innerText="⚠️ اكتب البريد وكلمة المرور أولًا";return;}
+ auth.signInWithEmailAndPassword(e,p)
+ .then(user=>{
+   authError.innerText="";
+ })
+ .catch(err=>authError.innerText=err.message);
+});
 
-// RESET PASSWORD
-function resetPassword(){
+// FORGOT PASSWORD
+document.getElementById("forgotBtn").addEventListener("click",function(){
  const e=document.getElementById("email").value.trim();
  if(!e){authError.innerText="✉️ اكتب بريدك الإلكتروني أولًا";return;}
  auth.sendPasswordResetEmail(e)
  .then(()=>authError.innerText="✅ تم إرسال رابط إعادة التعيين على الإيميل")
  .catch(err=>authError.innerText=err.message);
-}
+});
 
 // LOGOUT
 function logout(){auth.signOut();}
 
-// STATE
+// AUTH STATE
 auth.onAuthStateChanged(u=>{
  if(!u){showAuth();return;}
  show("home");
@@ -159,7 +171,9 @@ function loadFriends(){
    db.ref("online/"+uid).once("value",o=>{
     const d=document.createElement("div");
     d.className="friend";
-    d.innerHTML=`<b>${u.val().name}</b><br>${o.exists()?'<span class="online">🟢 متصل الآن</span>':'<span class="offline">آخر ظهور '+new Date(u.val().lastSeen).toLocaleTimeString()+'</span>'}`;
+    const color=getColor(uid);
+    const avatar=u.val().name[0].toUpperCase();
+    d.innerHTML=`<span class="avatar" style="background:${color}">${avatar}</span><b>${u.val().name}</b><br>${o.exists()?'<span class="online">🟢 متصل الآن</span>':'<span class="offline">آخر ظهور '+new Date(u.val().lastSeen).toLocaleTimeString()+'</span>'}`;
     d.onclick=()=>openPrivate(uid,u.val().name);
     friends.appendChild(d);
    });
@@ -178,7 +192,7 @@ function openPrivate(uid,name){
   const d=s.val();
   const m=document.createElement("div");
   m.className="msg "+(d.uid===auth.currentUser.uid?"me":"");
-  m.innerText=d.text;
+  m.innerHTML=`<span class="avatar" style="background:${getColor(d.uid)}">${d.text[0]}</span> ${d.text}`;
   messages.appendChild(m);
   if(d.uid!==auth.currentUser.uid) sound.play();
  });
@@ -195,7 +209,7 @@ function loadPublic(){
   const d=s.val();
   const m=document.createElement("div");
   m.className="msg";
-  m.innerHTML=`<b>${d.name}</b>: ${d.text}`;
+  m.innerHTML=`<span class="avatar" style="background:${getColor(d.uid)}">${d.name[0]}</span> <b>${d.name}</b>: ${d.text}`;
   publicMsgs.appendChild(m);
   if(d.uid!==auth.currentUser.uid) sound.play();
  });
@@ -216,7 +230,7 @@ function checkBan(cb){
  });
 }
 
-// UI
+// NAV & UI
 function nav(p){show(p)}
 function show(p){
  auth.classList.add("hidden");
@@ -228,6 +242,5 @@ function show(p){
 }
 function showAuth(){auth.classList.remove("hidden");home.classList.add("hidden");public.classList.add("hidden");chat.classList.add("hidden");profile.classList.add("hidden");}
 </script>
-
 </body>
 </html>
