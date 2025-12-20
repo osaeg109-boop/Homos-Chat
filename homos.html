@@ -3,222 +3,309 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HOMOS Chat</title>
+<title>HIMOS Chat</title>
+
 <style>
-*{box-sizing:border-box} body{margin:0;font-family:Arial,sans-serif;background:#0f0f0f;color:#fff;} 
-.page{padding:15px;padding-bottom:90px} .hidden{display:none} 
-h2,h3{text-align:center;margin:10px 0;} 
-input,button{width:100%;padding:14px;margin:8px 0;border-radius:12px;border:none;font-size:16px;} 
-input{background:#222;color:#fff} 
-button{background:#00ff88;font-weight:bold;cursor:pointer;} 
-button:active{opacity:.8} 
-.friend,.msg{background:#1e1e1e;padding:12px;margin:6px 0;border-radius:12px;word-break:break-word;position:relative;} 
-.me{background:#00ff88;color:#000} 
-.online{color:#00ff88;font-size:13px} 
-.offline{color:#aaa;font-size:13px} 
-.nav{position:fixed;bottom:0;width:100%;height:70px;background:#000;display:flex;border-top:1px solid #222;} 
-.nav div{flex:1;text-align:center;padding-top:10px;font-size:14px;color:#aaa;cursor:pointer;} 
-.nav div.active{color:#00ff88} 
-.nav div span{display:block;font-size:22px} 
-.error{color:#ff5555;text-align:center;margin-top:10px;font-size:14px;} 
-.avatar{width:30px;height:30px;border-radius:50%;display:inline-block;text-align:center;line-height:30px;margin-right:8px;font-weight:bold;color:#fff;}
-.msg .replyBtn{position:absolute;right:5px;top:5px;font-size:12px;cursor:pointer;color:#00ff88;}
-.msg .deleteBtn{position:absolute;left:5px;top:5px;font-size:12px;cursor:pointer;color:red;}
-.onlineCount{color:#00ff88;font-size:14px;margin-bottom:10px;text-align:center;}
+body{
+  margin:0;
+  font-family:Arial;
+  background:#121212;
+  color:#fff;
+}
+.chat{
+  max-width:500px;
+  width:100%;
+  height:100vh;
+  margin:0 auto;
+  background:#1e1e1e;
+  border-radius:15px;
+  overflow:hidden;
+  box-shadow:0 0 20px #000;
+  display:flex;
+  flex-direction:column;
+}
+.header{
+  background:#00ff88;
+  color:#000;
+  padding:14px;
+  font-weight:bold;
+  text-align:center;
+  position:relative;
+}
+.header .online{
+  font-size:12px;
+  position:absolute;
+  right:10px;
+  top:14px;
+}
+#messages{
+  flex:1;
+  overflow-y:auto;
+  padding:10px;
+  background:#111;
+}
+.msg{
+  display:flex;
+  margin:8px 0;
+  max-width:85%;
+  position:relative;
+}
+.avatar{
+  width:35px;
+  height:35px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:bold;
+  margin-right:8px;
+  flex-shrink:0;
+}
+.msg-content{
+  background:#222;
+  padding:8px 12px;
+  border-radius:12px;
+  flex:1;
+  word-wrap:break-word;
+}
+.msg.me .msg-content{background:#00ff88;color:#000;margin-left:auto;}
+.msg .user-name{font-size:12px;font-weight:bold;margin-bottom:3px;}
+.msg .time{font-size:10px;opacity:0.7;margin-top:2px;}
+.reply-box{
+  font-size:11px;
+  border-left:3px solid #00ff88;
+  padding-left:5px;
+  margin-bottom:3px;
+  color:#fff;
+  background:#333;
+  border-radius:5px;
+}
+.footer{
+  display:flex;
+  border-top:1px solid #333;
+}
+.footer input{
+  flex:1;
+  padding:14px;
+  border:none;
+  outline:none;
+}
+.footer button{
+  background:#00ff88;
+  border:none;
+  padding:14px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.stats{
+  font-size:12px;
+  padding:6px;
+  text-align:center;
+  background:#000;
+}
+button.admin-btn{
+  background:red;
+  color:#fff;
+  border:none;
+  margin-left:5px;
+  padding:2px 5px;
+  font-size:10px;
+  cursor:pointer;
+  border-radius:5px;
+}
+@media(max-width:500px){
+  .chat{border-radius:0;}
+  .footer input{padding:10px;}
+  .footer button{padding:10px;}
+}
 </style>
 </head>
+
 <body>
 
-<!-- LOGIN BY NAME -->
-<div id="auth" class="page">
-  <h2>🔐 HOMOS Chat</h2>
-  <input id="name" placeholder="أدخل اسمك">
-  <button id="loginBtn">دخول</button>
-  <div id="authError" class="error"></div>
-</div>
+<div class="chat">
+  <div class="header">
+    💬 HIMOS Chat
+    <span class="online">🟢 المتصلين: <span id="online">0</span></span>
+  </div>
 
-<!-- HOME -->
-<div id="home" class="page hidden">
-  <h3>🏠 الرئيسية</h3>
-  <div class="onlineCount">المستخدمين المتصلين: <span id="onlineCount">0</span></div>
-  <input id="friendName" placeholder="إضافة صديق بالاسم">
-  <button onclick="addFriend()">➕ إضافة صديق</button>
-  <div id="friends"></div>
-</div>
-
-<!-- PUBLIC CHAT -->
-<div id="public" class="page hidden">
-  <h3>🌍 الشات العام</h3>
-  <div id="publicMsgs"></div>
-  <input id="publicInput" placeholder="اكتب رسالة عامة">
-  <button onclick="sendPublic()">إرسال</button>
-</div>
-
-<!-- PRIVATE CHAT -->
-<div id="chat" class="page hidden">
-  <h3 id="chatTitle"></h3>
+  <div id="stats" class="stats"></div>
   <div id="messages"></div>
-  <input id="msg" placeholder="اكتب رسالة">
-  <button onclick="sendPrivate()">إرسال</button>
+
+  <div class="footer">
+    <input id="msg" placeholder="اكتب رسالة محترمة...">
+    <button onclick="send()">إرسال</button>
+  </div>
 </div>
 
-<!-- PROFILE -->
-<div id="profile" class="page hidden">
-  <h3>👤 البروفايل</h3>
-  <p id="info"></p>
-  <button onclick="logout()">تسجيل خروج</button>
-</div>
-
-<!-- NAV -->
-<div class="nav">
-  <div onclick="nav('home')"><span>🏠</span>الرئيسية</div>
-  <div onclick="nav('public')"><span>🌍</span>العام</div>
-  <div onclick="nav('profile')"><span>👤</span>حسابي</div>
-</div>
-
-<audio id="sound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+<audio id="notif-sound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
-// Firebase config
-firebase.initializeApp({
- apiKey:"AIzaSyBEazcwOjQFvTTvKP7C-LltEOnIlkF54x0",
- authDomain:"chat-ab546.firebaseapp.com",
- databaseURL:"https://chat-ab546-default-rtdb.firebaseio.com",
- projectId:"chat-ab546"
-});
+// =================== CONFIG ===================
+var firebaseConfig = {
+  apiKey: "AIzaSyBEazcwOjQFvTTvKP7C-LltEOnIlkF54x0",
+  authDomain: "chat-ab546.firebaseapp.com",
+  databaseURL: "https://chat-ab546-default-rtdb.firebaseio.com",
+  projectId: "chat-ab546",
+  storageBucket: "chat-ab546.appspot.com",
+  messagingSenderId: "1096336837314",
+  appId: "1:1096336837314:web:2abe8434e5ced8ca1a895b"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const chatRef = db.ref("chat");
+const usersRef = db.ref("users");
+const bansRef = db.ref("bans");
+const statsRef = db.ref("stats");
+const onlineRef = db.ref("online");
 
-const db=firebase.database();
-const ADMIN="ahmedfouad01278837444@gmail.com"; // يمكن تعديل الأدمن
-const BAN=3*60*60*1000;
-let currentUser=null;
-let currentChat=null;
-let replyTo=null;
+const ADMIN = "Mohamed Homos";
+const DAY = 10800000; // 3 ساعات بالمللي ثانية
 
-// HELPER
-function getColor(uid){return "#"+((Math.abs(hashCode(uid))%0xFFFFFF).toString(16).padStart(6,"0"));}
-function hashCode(str){let h=0;for(let i=0;i<str.length;i++){h=str.charCodeAt(i)+((h<<5)-h);}return h;}
-
-// LOGIN BY NAME
-document.getElementById("loginBtn").addEventListener("click",function(){
- const name=document.getElementById("name").value.trim();
- if(!name){authError.innerText="⚠️ أدخل اسمك"; return;}
- db.ref("users").orderByChild("name").equalTo(name).once("value",snapshot=>{
-   if(snapshot.exists()){authError.innerText="⚠️ الاسم مستخدم بالفعل"; return;}
-   // تسجيل المستخدم الجديد
-   let uid="uid_"+Date.now();
-   currentUser={uid,name};
-   db.ref("users/"+uid).set({name,lastSeen:Date.now()});
-   db.ref("online/"+uid).set(true);
-   db.ref("online/"+uid).onDisconnect().remove();
-   show("home");
-   info.innerText=name;
-   updateOnlineCount();
-   loadFriends();
-   loadPublic();
- });
-});
-
-// FRIENDS
-function addFriend(){
- const fn=document.getElementById("friendName").value.trim();
- if(!fn) return;
- db.ref("users").orderByChild("name").equalTo(fn).once("value",s=>{
-   s.forEach(u=>{
-     db.ref("friends/"+currentUser.uid+"/"+u.key).set(true);
-     db.ref("friends/"+u.key+"/"+currentUser.uid).set(true);
-   });
- });
- document.getElementById("friendName").value="";
+// =================== USER ===================
+let username = localStorage.getItem("chatName");
+if(!username){
+  username = prompt("اكتب اسمك:");
+  localStorage.setItem("chatName",username);
 }
-function loadFriends(){
- friends.innerHTML="";
- db.ref("friends/"+currentUser.uid).on("child_added",s=>{
-  const uid=s.key;
-  db.ref("users/"+uid).once("value",u=>{
-   db.ref("online/"+uid).once("value",o=>{
-    const d=document.createElement("div");
-    d.className="friend";
-    const color=getColor(uid);
-    const avatar=u.val().name[0].toUpperCase();
-    d.innerHTML=`<span class="avatar" style="background:${color}">${avatar}</span><b>${u.val().name}</b><br>${o.exists()?'<span class="online">🟢 متصل الآن</span>':'<span class="offline">آخر ظهور '+new Date(u.val().lastSeen).toLocaleTimeString()+'</span>'}`;
-    d.onclick=()=>openPrivate(uid,u.val().name);
-    friends.appendChild(d);
-   });
+
+// اللون حسب الاسم
+function color(name){
+  let hash=0;
+  for(let i=0;i<name.length;i++) hash=name.charCodeAt(i)+((hash<<5)-hash);
+  return `hsl(${hash%360},70%,60%)`;
+}
+
+// =================== AVATAR ===================
+function avatarLetter(name){
+  return name.charAt(0).toUpperCase();
+}
+
+// =================== TIME ===================
+function timeAgo(t){
+  let d=(Date.now()-t)/1000;
+  if(d<60) return "الآن";
+  if(d<3600) return `منذ ${Math.floor(d/60)} دقيقة`;
+  return `منذ ${Math.floor(d/3600)} ساعة`;
+}
+
+// =================== BANS ===================
+bansRef.child(username).once("value",s=>{
+  if(s.exists() && Date.now()-s.val()<DAY){
+    document.body.innerHTML="<h2 style='text-align:center;margin-top:100px'>🚫 تم حظرك لمدة 3 ساعات</h2>";
+    throw "BANNED";
+  }else{
+    bansRef.child(username).remove();
+  }
+});
+
+// =================== ONLINE ===================
+let me = onlineRef.push(true);
+me.onDisconnect().remove();
+onlineRef.on("value",s=>{
+  document.getElementById("online").innerText = s.numChildren();
+});
+
+// =================== STATS ===================
+statsRef.child("messages").once("value",s=>{
+  if(!s.exists()) statsRef.child("messages").set(0);
+});
+statsRef.child("users").once("value",s=>{
+  if(!s.exists()) statsRef.child("users").set({});
+});
+
+// =================== SEND ===================
+let replyTo = null;
+function send(){
+  let msgEl = document.getElementById("msg");
+  let text = msgEl.value.trim();
+  if(!text) return;
+
+  chatRef.push({
+    user: username,
+    text: text,
+    time: Date.now(),
+    reply: replyTo
   });
- });
+  // تحديث عدد الرسائل
+  statsRef.child("messages").transaction(n=>(n||0)+1);
+  // تحديث عداد المستخدم
+  statsRef.child("users").child(username).transaction(n=>(n||0)+1);
+
+  msgEl.value = "";
+  replyTo = null;
 }
 
-// PRIVATE CHAT
-function openPrivate(uid,name){
- currentChat=[currentUser.uid,uid].sort().join("_");
- chatTitle.innerText=name;
- show("chat");
- messages.innerHTML="";
- db.ref("private/"+currentChat).off();
- db.ref("private/"+currentChat).on("child_added",s=>{
-  const d=s.val();
-  const m=document.createElement("div");
-  m.className="msg";
-  if(d.uid===currentUser.uid) m.classList.add("me");
-  m.innerHTML=`<span class="avatar" style="background:${getColor(d.uid)}">${d.text[0]}</span> ${d.text} <span class="replyBtn" onclick="setReply('${s.key}')">رد</span>`;
-  messages.appendChild(m);
-  if(d.uid!==currentUser.uid) document.getElementById("sound").play();
- });
+// =================== CHAT ===================
+chatRef.limitToLast(200).on("child_added",snap=>{
+  let d = snap.val();
+  if(Date.now()-d.time>DAY){
+    snap.ref.remove();
+    return;
+  }
+
+  let div = document.createElement("div");
+  div.className = "msg "+(d.user===username?"me":"");
+  
+  // Avatar
+  let avatar = `<div class="avatar" style="background:${color(d.user)}">${avatarLetter(d.user)}</div>`;
+  
+  // Reply box مع لون مميز
+  let replyBox = "";
+  if(d.reply){
+    replyBox = `<div class="reply-box">
+                  ↪ ${d.reply.user}: ${d.reply.text}
+                </div>`;
+  }
+  
+  // Admin buttons
+  let adminButtons="";
+  if(username===ADMIN){
+    adminButtons=` <button class="admin-btn" onclick="deleteMsg('${snap.key}')">حذف</button>
+                   <button class="admin-btn" onclick="banUser('${d.user}')">حظر</button>`;
+  }
+
+  div.innerHTML = avatar + `<div class="msg-content">
+    ${replyBox}
+    <div class="user-name">${d.user===ADMIN?'👑 ':' '}${d.user}${adminButtons}</div>
+    <div>${d.text}</div>
+    <div class="time">${timeAgo(d.time)}</div>
+  </div>`;
+
+  // عند الضغط على الرسالة للرد
+  div.onclick = ()=>{
+    if(d.user!==username) replyTo = {user:d.user,text:d.text};
+    document.getElementById("msg").focus();
+  }
+
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+
+  // إشعارات الصوت
+  if(d.user!==username) document.getElementById("notif-sound").play();
+});
+
+// =================== DELETE & BAN ===================
+function deleteMsg(key){
+  chatRef.child(key).remove();
 }
-function sendPrivate(){
- if(!msg.value)return;
- let text=replyTo?`↪ ${replyTo}: ${msg.value}`:msg.value;
- db.ref("private/"+currentChat).push({uid:currentUser.uid,text});
- msg.value=""; replyTo=null;
+function banUser(user){
+  bansRef.child(user).set(Date.now());
 }
 
-// PUBLIC CHAT
-function loadPublic(){
- publicMsgs.innerHTML="";
- db.ref("public").limitToLast(50).on("child_added",s=>{
-  const d=s.val();
-  const m=document.createElement("div");
-  m.className="msg";
-  m.innerHTML=`<span class="avatar" style="background:${getColor(d.uid)}">${d.name[0]}</span> <b>${d.name}</b>: ${d.text} <span class="replyBtn" onclick="setReply('${d.name}')">رد</span>`;
-  publicMsgs.appendChild(m);
-  if(d.uid!==currentUser.uid) document.getElementById("sound").play();
- });
-}
-function sendPublic(){
- if(!publicInput.value)return;
- db.ref("public").push({uid:currentUser.uid,name:currentUser.name,text:publicInput.value});
- publicInput.value="";
-}
-
-// REPLY
-function setReply(name){replyTo=name; alert("سترد على: "+name);}
-
-// LOGOUT
-function logout(){
- db.ref("online/"+currentUser.uid).remove();
- currentUser=null;
- showAuth();
-}
-
-// NAV
-function nav(p){show(p);}
-function show(p){
- auth.classList.add("hidden");
- home.classList.add("hidden");
- public.classList.add("hidden");
- chat.classList.add("hidden");
- profile.classList.add("hidden");
- document.getElementById(p).classList.remove("hidden");
-}
-function showAuth(){auth.classList.remove("hidden");home.classList.add("hidden");public.classList.add("hidden");chat.classList.add("hidden");profile.classList.add("hidden");}
-
-// ONLINE COUNT
-function updateOnlineCount(){
- db.ref("online").on("value",s=>{onlineCount.innerText=s.numChildren();});
-}
+// =================== TOP 3 USERS ===================
+statsRef.child("users").on("value",s=>{
+  if(username!==ADMIN) return;
+  let users = s.val()||{};
+  let arr = Object.keys(users).map(u=>({user:u,count:users[u]}));
+  arr.sort((a,b)=>b.count-a.count);
+  arr = arr.slice(0,3);
+  stats.innerHTML = "📊 أكثر 3 مستخدمين نشطين: "+arr.map(a=>`${a.user} (${a.count})`).join(", ");
+});
 </script>
+
 </body>
 </html>
