@@ -11,14 +11,14 @@
 <!-- إعدادات المشاركة (Open Graph) -->
 <meta property="og:title" content="HIMOS Chat">
 <meta property="og:description" content="أفضل شات للمحادثة الحية مع الجميع.">
-<meta property="og:image" content="Logo.JPG">
+<meta property="og:image" content="Logo.jpeg">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://yourwebsite.com">
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="HIMOS Chat">
 <meta name="twitter:description" content="أفضل شات للمحادثة الحية مع الجميع.">
-<meta name="twitter:image" content="Logo.JPG">
+<meta name="twitter:image" content="Logo.jpeg">
 
 <style>
 body{
@@ -89,6 +89,7 @@ body{
   border-radius:12px;
   flex:1;
   word-wrap:break-word;
+  position:relative;
 }
 .msg.me .msg-content{background:#00ff88;color:#000;margin-left:auto;}
 .msg .user-name{font-size:12px;font-weight:bold;margin-bottom:3px;}
@@ -102,15 +103,38 @@ body{
   background:#333;
   border-radius:5px;
 }
+.reply-btn{
+  position:absolute;
+  top:5px;
+  right:5px;
+  background:#00ff88;
+  border:none;
+  color:#000;
+  font-size:10px;
+  padding:2px 5px;
+  cursor:pointer;
+  border-radius:5px;
+}
 .footer{
   display:flex;
+  flex-direction:column;
   border-top:1px solid #333;
+}
+#reply-display{
+  font-size:11px;
+  background:#333;
+  padding:5px;
+  border-left:3px solid #00ff88;
+  color:#fff;
+  display:none;
 }
 .footer input{
   flex:1;
   padding:14px;
   border:none;
   outline:none;
+  width:100%;
+  box-sizing:border-box;
 }
 .footer button{
   background:#00ff88;
@@ -118,6 +142,7 @@ body{
   padding:14px;
   font-weight:bold;
   cursor:pointer;
+  margin-top:5px;
 }
 .stats{
   font-size:12px;
@@ -147,7 +172,7 @@ button.admin-btn{
 
 <div class="chat">
   <div class="header">
-    <img src="Logo.JPG" alt="HIMOS Chat Logo">
+    <img src="Logo.jpeg" alt="HIMOS Chat Logo">
     💬 HIMOS Chat
     <span class="online">🟢 المتصلين: <span id="online">0</span></span>
   </div>
@@ -156,6 +181,7 @@ button.admin-btn{
   <div id="messages"></div>
 
   <div class="footer">
+    <div id="reply-display"></div>
     <input id="msg" placeholder="اكتب رسالة محترمة...">
     <button onclick="send()">إرسال</button>
   </div>
@@ -257,6 +283,7 @@ function send(){
 
   msgEl.value = "";
   replyTo = null;
+  document.getElementById("reply-display").style.display="none";
 }
 
 // =================== CHAT ===================
@@ -285,19 +312,23 @@ chatRef.limitToLast(200).on("child_added",snap=>{
     <div class="user-name">${d.user===ADMIN?'👑 ':' '}${d.user}${adminButtons}</div>
     <div>${d.text}</div>
     <div class="time">${timeAgo(d.time)}</div>
+    <button class="reply-btn" onclick="setReply('${d.user}',\`${d.text}\`)">رد</button>
   </div>`;
-
-  // عند الضغط على الرسالة لتحديدها للرد
-  div.onclick = ()=>{
-    if(d.user!==username) replyTo = {user:d.user,text:d.text};
-    document.getElementById("msg").focus();
-  }
 
   messages.appendChild(div);
   messages.scrollTop = messages.scrollHeight;
 
   if(d.user!==username) document.getElementById("notif-sound").play();
 });
+
+// =================== SET REPLY ===================
+function setReply(user,text){
+  replyTo = {user,text};
+  const display = document.getElementById("reply-display");
+  display.innerText = `↪ ${user}: ${text}`;
+  display.style.display="block";
+  document.getElementById("msg").focus();
+}
 
 // =================== DELETE & BAN ===================
 function deleteMsg(key){
