@@ -226,9 +226,7 @@ function color(name){
   for(let i=0;i<name.length;i++) hash=name.charCodeAt(i)+((hash<<5)-hash);
   return `hsl(${hash%360},70%,60%)`;
 }
-function avatarLetter(name){
-  return name.charAt(0).toUpperCase();
-}
+function avatarLetter(name){ return name.charAt(0).toUpperCase(); }
 function timeAgo(t){
   let d=(Date.now()-t)/1000;
   if(d<60) return "الآن";
@@ -241,9 +239,7 @@ bansRef.child(username).once("value",s=>{
   if(s.exists() && Date.now()-s.val()<THREE_HOURS){
     document.body.innerHTML="<h2 style='text-align:center;margin-top:100px'>🚫 تم حظرك لمدة 3 ساعات</h2>";
     throw "BANNED";
-  } else {
-    bansRef.child(username).remove();
-  }
+  } else { bansRef.child(username).remove(); }
 });
 
 // =================== ONLINE ===================
@@ -268,13 +264,7 @@ function send(){
   let text = msgEl.value.trim();
   if(!text) return;
 
-  chatRef.push({
-    user: username,
-    text: text,
-    time: Date.now(),
-    reply: replyTo
-  });
-
+  chatRef.push({ user: username, text: text, time: Date.now(), reply: replyTo });
   msgEl.value = "";
   replyTo = null;
   document.getElementById("reply-display").style.display="none";
@@ -338,9 +328,10 @@ statsRef.child("users").on("value",s=>{
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('firebase-messaging-sw.js')
   .then(registration => {
-    console.log('Service Worker مسجل بنجاح');
-  })
-  .catch(err => console.error('فشل تسجيل Service Worker:', err));
+    console.log('Service Worker registered:', registration);
+  }).catch(err => {
+    console.error('Service Worker registration failed:', err);
+  });
 }
 </script>
 
