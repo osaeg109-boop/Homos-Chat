@@ -29,15 +29,11 @@ button:active{opacity:.8}
 </head>
 <body>
 
-<!-- AUTH -->
+<!-- LOGIN BY NAME -->
 <div id="auth" class="page">
   <h2>🔐 HOMOS Chat</h2>
-  <input id="name" placeholder="الاسم">
-  <input id="email" placeholder="البريد الإلكتروني">
-  <input id="pass" type="password" placeholder="كلمة المرور">
-  <button id="registerBtn">إنشاء حساب</button>
-  <button id="loginBtn">تسجيل دخول</button>
-  <button style="background:none;color:#00ff88" id="forgotBtn">هل نسيت كلمة المرور؟</button>
+  <input id="name" placeholder="أدخل اسمك">
+  <button id="loginBtn">دخول</button>
   <div id="authError" class="error"></div>
 </div>
 
@@ -45,7 +41,7 @@ button:active{opacity:.8}
 <div id="home" class="page hidden">
   <h3>🏠 الرئيسية</h3>
   <div class="onlineCount">المستخدمين المتصلين: <span id="onlineCount">0</span></div>
-  <input id="friendEmail" placeholder="إضافة صديق بالبريد الإلكتروني">
+  <input id="friendName" placeholder="إضافة صديق بالاسم">
   <button onclick="addFriend()">➕ إضافة صديق</button>
   <div id="friends"></div>
 </div>
@@ -83,7 +79,6 @@ button:active{opacity:.8}
 <audio id="sound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
@@ -95,79 +90,52 @@ firebase.initializeApp({
  projectId:"chat-ab546"
 });
 
-const auth=firebase.auth();
 const db=firebase.database();
-const ADMIN="ahmedfouad01278837444@gmail.com";
+const ADMIN="ahmedfouad01278837444@gmail.com"; // يمكن تعديل الأدمن
 const BAN=3*60*60*1000;
+let currentUser=null;
 let currentChat=null;
-let replyTo=null; // للرد على الرسالة
+let replyTo=null;
 
 // HELPER
 function getColor(uid){return "#"+((Math.abs(hashCode(uid))%0xFFFFFF).toString(16).padStart(6,"0"));}
 function hashCode(str){let h=0;for(let i=0;i<str.length;i++){h=str.charCodeAt(i)+((h<<5)-h);}return h;}
 
-// REGISTER
-document.getElementById("registerBtn").addEventListener("click",function(){
- const n=document.getElementById("name").value.trim();
- const e=document.getElementById("email").value.trim();
- const p=document.getElementById("pass").value.trim();
- if(!n||!e||!p){authError.innerText="⚠️ أكمل جميع الحقول";return;}
- auth.createUserWithEmailAndPassword(e,p)
- .then(res=>db.ref("users/"+res.user.uid).set({name:n,email:e,lastSeen:Date.now()}))
- .then(()=>authError.innerText="")
- .catch(err=>authError.innerText=err.message);
-});
-
-// LOGIN
+// LOGIN BY NAME
 document.getElementById("loginBtn").addEventListener("click",function(){
- const e=document.getElementById("email").value.trim();
- const p=document.getElementById("pass").value.trim();
- if(!e||!p){authError.innerText="⚠️ اكتب البريد وكلمة المرور أولًا";return;}
- auth.signInWithEmailAndPassword(e,p)
- .then(u=>{authError.innerText="";})
- .catch(err=>authError.innerText=err.message);
-});
-
-// FORGOT PASSWORD
-document.getElementById("forgotBtn").addEventListener("click",function(){
- const e=document.getElementById("email").value.trim();
- if(!e){authError.innerText="✉️ اكتب البريد أولًا";return;}
- auth.sendPasswordResetEmail(e)
- .then(()=>authError.innerText="✅ تم إرسال رابط إعادة التعيين على الإيميل")
- .catch(err=>authError.innerText=err.message);
-});
-
-// LOGOUT
-function logout(){auth.signOut();}
-
-// AUTH STATE
-auth.onAuthStateChanged(u=>{
- if(!u){showAuth();return;}
- show("home");
- info.innerText=u.email;
- db.ref("online/"+u.uid).set(true);
- db.ref("online/"+u.uid).onDisconnect().remove();
- db.ref("users/"+u.uid+"/lastSeen").onDisconnect().set(Date.now());
- updateOnlineCount();
- loadFriends();
- loadPublic();
+ const name=document.getElementById("name").value.trim();
+ if(!name){authError.innerText="⚠️ أدخل اسمك"; return;}
+ db.ref("users").orderByChild("name").equalTo(name).once("value",snapshot=>{
+   if(snapshot.exists()){authError.innerText="⚠️ الاسم مستخدم بالفعل"; return;}
+   // تسجيل المستخدم الجديد
+   let uid="uid_"+Date.now();
+   currentUser={uid,name};
+   db.ref("users/"+uid).set({name,lastSeen:Date.now()});
+   db.ref("online/"+uid).set(true);
+   db.ref("online/"+uid).onDisconnect().remove();
+   show("home");
+   info.innerText=name;
+   updateOnlineCount();
+   loadFriends();
+   loadPublic();
+ });
 });
 
 // FRIENDS
 function addFriend(){
- const fe=document.getElementById("friendEmail").value.trim();
- if(!fe)return;
- db.ref("users").orderByChild("email").equalTo(fe).once("value",s=>{
-  s.forEach(u=>{
-   db.ref("friends/"+auth.currentUser.uid+"/"+u.key).set(true);
-   db.ref("friends/"+u.key+"/"+auth.currentUser.uid).set(true);
-  });
+ const fn=document.getElementById("friendName").value.trim();
+ if(!fn) return;
+ db.ref("users").orderByChild("name").equalTo(fn).once("value",s=>{
+   s.forEach(u=>{
+     db.ref("friends/"+currentUser.uid+"/"+u.key).set(true);
+     db.ref("friends/"+u.key+"/"+currentUser.uid).set(true);
+   });
  });
- document.getElementById("friendEmail").value="";
+ document.getElementById("friendName").value="";
 }
 function loadFriends(){
  friends.innerHTML="";
- db.ref("friends/"+auth.currentUser.uid).on("child_added",s=>{
+ db.ref("friends/"+currentUser.uid).on("child_added",s=>{
   const uid=s.key;
   db.ref("users/"+uid).once("value",u=>{
    db.ref("online/"+uid).once("value",o=>{
@@ -185,7 +153,7 @@ function loadFriends(){
 
 // PRIVATE CHAT
 function openPrivate(uid,name){
- currentChat=[auth.currentUser.uid,uid].sort().join("_");
+ currentChat=[currentUser.uid,uid].sort().join("_");
  chatTitle.innerText=name;
  show("chat");
  messages.innerHTML="";
@@ -193,17 +161,18 @@ function openPrivate(uid,name){
  db.ref("private/"+currentChat).on("child_added",s=>{
   const d=s.val();
   const m=document.createElement("div");
-  m.className="msg "+(d.uid===auth.currentUser.uid?"me":"");
+  m.className="msg";
+  if(d.uid===currentUser.uid) m.classList.add("me");
   m.innerHTML=`<span class="avatar" style="background:${getColor(d.uid)}">${d.text[0]}</span> ${d.text} <span class="replyBtn" onclick="setReply('${s.key}')">رد</span>`;
-  if(auth.currentUser.email===ADMIN) m.innerHTML+=` <span class="deleteBtn" onclick="deleteMsg('${s.key}')">حذف</span>`;
   messages.appendChild(m);
-  if(d.uid!==auth.currentUser.uid) document.getElementById("sound").play();
+  if(d.uid!==currentUser.uid) document.getElementById("sound").play();
  });
 }
 function sendPrivate(){
  if(!msg.value)return;
  let text=replyTo?`↪ ${replyTo}: ${msg.value}`:msg.value;
- checkBan(()=>{db.ref("private/"+currentChat).push({uid:auth.currentUser.uid,text,time:Date.now()}); msg.value=""; replyTo=null;});
+ db.ref("private/"+currentChat).push({uid:currentUser.uid,text});
+ msg.value=""; replyTo=null;
 }
 
 // PUBLIC CHAT
@@ -214,34 +183,28 @@ function loadPublic(){
   const m=document.createElement("div");
   m.className="msg";
   m.innerHTML=`<span class="avatar" style="background:${getColor(d.uid)}">${d.name[0]}</span> <b>${d.name}</b>: ${d.text} <span class="replyBtn" onclick="setReply('${d.name}')">رد</span>`;
-  if(auth.currentUser.email===ADMIN) m.innerHTML+=` <span class="deleteBtn" onclick="deleteMsgPublic('${s.key}')">حذف</span>`;
   publicMsgs.appendChild(m);
-  if(d.uid!==auth.currentUser.uid) document.getElementById("sound").play();
+  if(d.uid!==currentUser.uid) document.getElementById("sound").play();
  });
 }
 function sendPublic(){
  if(!publicInput.value)return;
- checkBan(()=>{db.ref("users/"+auth.currentUser.uid).once("value",u=>{
-  db.ref("public").push({uid:auth.currentUser.uid,name:u.val().name,text:publicInput.value,time:Date.now()});
-  publicInput.value="";
- });});
+ db.ref("public").push({uid:currentUser.uid,name:currentUser.name,text:publicInput.value});
+ publicInput.value="";
 }
 
-// BAN
-function checkBan(cb){
- db.ref("bans/"+auth.currentUser.uid).once("value",s=>{
-  if(s.exists() && Date.now()-s.val()<BAN){alert("🚫 محظور مؤقتًا");}
-  else{db.ref("bans/"+auth.currentUser.uid).remove(); cb();}
- });
-}
-
-// REPLY & DELETE
+// REPLY
 function setReply(name){replyTo=name; alert("سترد على: "+name);}
-function deleteMsg(key){db.ref("private/"+currentChat+"/"+key).remove();}
-function deleteMsgPublic(key){db.ref("public/"+key).remove();}
 
-// NAV & UI
-function nav(p){show(p)}
+// LOGOUT
+function logout(){
+ db.ref("online/"+currentUser.uid).remove();
+ currentUser=null;
+ showAuth();
+}
+
+// NAV
+function nav(p){show(p);}
 function show(p){
  auth.classList.add("hidden");
  home.classList.add("hidden");
