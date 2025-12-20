@@ -74,8 +74,8 @@ body{
 .reply-box{
   font-size:11px;
   border-left:3px solid #00ff88;
-  padding-left:5px;
-  margin-bottom:3px;
+  padding:5px;
+  margin-bottom:5px;
   color:#fff;
   background:#333;
   border-radius:5px;
@@ -219,6 +219,7 @@ statsRef.child("users").once("value",s=>{
 
 // =================== SEND ===================
 let replyTo = null;
+
 function send(){
   let msgEl = document.getElementById("msg");
   let text = msgEl.value.trim();
@@ -230,10 +231,6 @@ function send(){
     time: Date.now(),
     reply: replyTo
   });
-  // تحديث عدد الرسائل
-  statsRef.child("messages").transaction(n=>(n||0)+1);
-  // تحديث عداد المستخدم
-  statsRef.child("users").child(username).transaction(n=>(n||0)+1);
 
   msgEl.value = "";
   replyTo = null;
@@ -249,20 +246,12 @@ chatRef.limitToLast(200).on("child_added",snap=>{
 
   let div = document.createElement("div");
   div.className = "msg "+(d.user===username?"me":"");
-  
-  // Avatar
+
   let avatar = `<div class="avatar" style="background:${color(d.user)}">${avatarLetter(d.user)}</div>`;
   
-  // Reply box مع لون مميز
-  let replyBox = "";
-  if(d.reply){
-    replyBox = `<div class="reply-box">
-                  ↪ ${d.reply.user}: ${d.reply.text}
-                </div>`;
-  }
-  
-  // Admin buttons
-  let adminButtons="";
+  let replyBox = d.reply?`<div class="reply-box">↪ ${d.reply.user}: ${d.reply.text}</div>`:"";
+
+  let adminButtons = "";
   if(username===ADMIN){
     adminButtons=` <button class="admin-btn" onclick="deleteMsg('${snap.key}')">حذف</button>
                    <button class="admin-btn" onclick="banUser('${d.user}')">حظر</button>`;
@@ -275,7 +264,7 @@ chatRef.limitToLast(200).on("child_added",snap=>{
     <div class="time">${timeAgo(d.time)}</div>
   </div>`;
 
-  // عند الضغط على الرسالة للرد
+  // عند الضغط على الرسالة لتحديدها للرد
   div.onclick = ()=>{
     if(d.user!==username) replyTo = {user:d.user,text:d.text};
     document.getElementById("msg").focus();
@@ -284,7 +273,6 @@ chatRef.limitToLast(200).on("child_added",snap=>{
   messages.appendChild(div);
   messages.scrollTop = messages.scrollHeight;
 
-  // إشعارات الصوت
   if(d.user!==username) document.getElementById("notif-sound").play();
 });
 
