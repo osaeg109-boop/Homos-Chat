@@ -2,168 +2,129 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>HIMOS Chat</title>
 
-<!-- أيقونة الموقع -->
-<link rel="icon" href="Logo.jpeg" type="image/jpeg">
+<link rel="icon" href="Logo.jpeg">
 
-<!-- إعدادات المشاركة (Open Graph) -->
 <meta property="og:title" content="HIMOS Chat">
-<meta property="og:description" content="أفضل شات للمحادثة الحية مع الجميع.">
+<meta property="og:description" content="شات عام مباشر بتجربة تطبيق حقيقية">
 <meta property="og:image" content="Logo.jpeg">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://yourwebsite.com">
-
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="HIMOS Chat">
-<meta name="twitter:description" content="أفضل شات للمحادثة الحية مع الجميع.">
-<meta name="twitter:image" content="Logo.jpeg">
 
 <style>
+*{box-sizing:border-box}
 body{
   margin:0;
-  font-family:Arial;
-  background:#121212;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial;
+  background:#0f0f0f;
   color:#fff;
+  overscroll-behavior:none;
 }
 .chat{
-  max-width:500px;
-  width:100%;
-  height:100vh;
-  margin:0 auto;
-  background:#1e1e1e;
-  border-radius:15px;
-  overflow:hidden;
-  box-shadow:0 0 20px #000;
+  height:100dvh;
   display:flex;
   flex-direction:column;
 }
 .header{
   background:#00ff88;
   color:#000;
-  padding:14px;
-  font-weight:bold;
-  text-align:center;
-  position:relative;
+  padding:12px;
   display:flex;
   align-items:center;
   justify-content:center;
+  font-weight:bold;
+  position:relative;
 }
-.header img{
-  height:40px;
-  margin-right:10px;
-}
-.header .online{
-  font-size:12px;
+.header img{height:34px;margin-right:8px}
+.online{
   position:absolute;
   right:10px;
-  top:14px;
+  font-size:12px;
+}
+#pinned{
+  display:none;
+  background:linear-gradient(90deg,#00ff88,#00ccff);
+  color:#000;
+  padding:8px;
+  text-align:center;
+  font-weight:bold;
 }
 #messages{
   flex:1;
-  overflow-y:auto;
   padding:10px;
-  background:#111;
+  overflow-y:auto;
+  scrollbar-width:none;
 }
+#messages::-webkit-scrollbar{display:none}
+
 .msg{
   display:flex;
-  margin:8px 0;
-  max-width:85%;
-  position:relative;
+  margin-bottom:10px;
+  animation:pop .2s ease;
+}
+@keyframes pop{
+  from{transform:scale(.95);opacity:0}
+  to{transform:scale(1);opacity:1}
 }
 .avatar{
-  width:35px;
-  height:35px;
+  width:36px;height:36px;
   border-radius:50%;
   display:flex;
   align-items:center;
   justify-content:center;
   font-weight:bold;
   margin-right:8px;
-  flex-shrink:0;
 }
 .msg-content{
-  background:#222;
-  padding:8px 12px;
-  border-radius:12px;
-  flex:1;
-  word-wrap:break-word;
+  background:#1f1f1f;
+  padding:8px 10px;
+  border-radius:14px;
+  max-width:80%;
   position:relative;
 }
-.msg.me .msg-content{background:#00ff88;color:#000;margin-left:auto;}
-.msg .user-name{font-size:12px;font-weight:bold;margin-bottom:3px;}
-.msg .time{font-size:10px;opacity:0.7;margin-top:2px;}
-.reply-box{
-  font-size:11px;
-  border-left:3px solid #00ff88;
-  padding:5px;
-  margin-bottom:5px;
-  color:#fff;
-  background:#333;
-  border-radius:5px;
-}
-.reply-btn{
-  position:absolute;
-  top:5px;
-  right:5px;
+.me .msg-content{
   background:#00ff88;
-  border:none;
   color:#000;
+  margin-left:auto;
+}
+.user{
+  font-size:12px;
+  font-weight:bold;
+}
+.time{
   font-size:10px;
-  padding:2px 5px;
+  opacity:.6;
+}
+.reactions{
+  margin-top:4px;
+}
+.reactions span{
+  background:#00000055;
+  padding:3px 7px;
+  border-radius:12px;
+  font-size:12px;
+  margin-right:4px;
   cursor:pointer;
-  border-radius:5px;
 }
 .footer{
+  padding:8px;
+  background:#111;
   display:flex;
-  flex-direction:column;
-  border-top:1px solid #333;
-}
-#reply-display{
-  font-size:11px;
-  background:#333;
-  padding:5px;
-  border-left:3px solid #00ff88;
-  color:#fff;
-  display:none;
+  gap:6px;
 }
 .footer input{
   flex:1;
-  padding:14px;
+  padding:12px;
   border:none;
+  border-radius:12px;
   outline:none;
-  width:100%;
-  box-sizing:border-box;
 }
 .footer button{
   background:#00ff88;
   border:none;
-  padding:14px;
+  padding:12px 16px;
+  border-radius:12px;
   font-weight:bold;
-  cursor:pointer;
-  margin-top:5px;
-}
-.stats{
-  font-size:12px;
-  padding:6px;
-  text-align:center;
-  background:#000;
-}
-button.admin-btn{
-  background:red;
-  color:#fff;
-  border:none;
-  margin-left:5px;
-  padding:2px 5px;
-  font-size:10px;
-  cursor:pointer;
-  border-radius:5px;
-}
-@media(max-width:500px){
-  .chat{border-radius:0;}
-  .footer input{padding:10px;}
-  .footer button{padding:10px;}
 }
 </style>
 </head>
@@ -172,166 +133,115 @@ button.admin-btn{
 
 <div class="chat">
   <div class="header">
-    <img src="Logo.jpeg" alt="HIMOS Chat Logo">
-    💬 HIMOS Chat
-    <span class="online">🟢 المتصلين: <span id="online">0</span></span>
+    <img src="Logo.jpeg">
+    HIMOS Chat
+    <span class="online">🟢 <span id="online">0</span></span>
   </div>
 
-  <div id="stats" class="stats"></div>
+  <div id="pinned"></div>
+
   <div id="messages"></div>
 
   <div class="footer">
-    <div id="reply-display"></div>
-    <input id="msg" placeholder="اكتب رسالة محترمة...">
+    <input id="msg" placeholder="اكتب رسالة…">
     <button onclick="send()">إرسال</button>
   </div>
 </div>
-
-<audio id="notif-sound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
-// =================== CONFIG ===================
 var firebaseConfig = {
   apiKey: "AIzaSyBEazcwOjQFvTTvKP7C-LltEOnIlkF54x0",
   authDomain: "chat-ab546.firebaseapp.com",
   databaseURL: "https://chat-ab546-default-rtdb.firebaseio.com",
-  projectId: "chat-ab546",
-  storageBucket: "chat-ab546.appspot.com",
-  messagingSenderId: "1096336837314",
-  appId: "1:1096336837314:web:2abe8434e5ced8ca1a895b"
+  projectId: "chat-ab546"
 };
 firebase.initializeApp(firebaseConfig);
 
 const db = firebase.database();
 const chatRef = db.ref("chat");
-const statsRef = db.ref("stats");
-const bansRef = db.ref("bans");
+const pinnedRef = db.ref("pinnedMessage");
 const onlineRef = db.ref("online");
-const ADMIN = "Mohamed Homos";
-const THREE_HOURS = 10800000; // 3 ساعات
 
-// =================== USER ===================
+const ADMIN = "Mohamed Homos";
+const AUTO_DELETE_TIME = 172800000; // 48 ساعة
+
 let username = localStorage.getItem("chatName");
 if(!username){
-  username = prompt("اكتب اسمك:");
+  username = prompt("اسمك؟");
   localStorage.setItem("chatName",username);
 }
 
-// =================== COLORS & AVATAR ===================
-function color(name){
-  let hash=0;
-  for(let i=0;i<name.length;i++) hash=name.charCodeAt(i)+((hash<<5)-hash);
-  return `hsl(${hash%360},70%,60%)`;
-}
-function avatarLetter(name){ return name.charAt(0).toUpperCase(); }
-function timeAgo(t){
-  let d=(Date.now()-t)/1000;
-  if(d<60) return "الآن";
-  if(d<3600) return `منذ ${Math.floor(d/60)} دقيقة`;
-  return `منذ ${Math.floor(d/3600)} ساعة`;
+function color(n){
+  let h=0;for(let c of n)h=c.charCodeAt(0)+((h<<5)-h);
+  return `hsl(${h%360},70%,60%)`;
 }
 
-// =================== BANS ===================
-bansRef.child(username).once("value",s=>{
-  if(s.exists() && Date.now()-s.val()<THREE_HOURS){
-    document.body.innerHTML="<h2 style='text-align:center;margin-top:100px'>🚫 تم حظرك لمدة 3 ساعات</h2>";
-    throw "BANNED";
-  } else { bansRef.child(username).remove(); }
-});
-
-// =================== ONLINE ===================
 let me = onlineRef.push(true);
 me.onDisconnect().remove();
 onlineRef.on("value",s=>{
-  document.getElementById("online").innerText = s.numChildren();
+  online.innerText=s.numChildren();
 });
 
-// =================== STATS ===================
-statsRef.child("messages").once("value",s=>{
-  if(!s.exists()) statsRef.child("messages").set(0);
-});
-statsRef.child("users").once("value",s=>{
-  if(!s.exists()) statsRef.child("users").set({});
+pinnedRef.on("value",s=>{
+  if(s.exists()){
+    pinned.style.display="block";
+    pinned.innerText="📌 "+s.val().text;
+  }else pinned.style.display="none";
 });
 
-// =================== SEND MESSAGE ===================
-let replyTo = null;
 function send(){
-  let msgEl = document.getElementById("msg");
-  let text = msgEl.value.trim();
-  if(!text) return;
-
-  chatRef.push({ user: username, text: text, time: Date.now(), reply: replyTo });
-  msgEl.value = "";
-  replyTo = null;
-  document.getElementById("reply-display").style.display="none";
-}
-
-// =================== CHAT ===================
-chatRef.limitToLast(200).on("child_added",snap=>{
-  let d = snap.val();
-  if(Date.now()-d.time>THREE_HOURS) { snap.ref.remove(); return; }
-
-  let div = document.createElement("div");
-  div.className = "msg "+(d.user===username?"me":"");
-
-  let avatar = `<div class="avatar" style="background:${color(d.user)}">${avatarLetter(d.user)}</div>`;
-  let replyBox = d.reply?`<div class="reply-box">↪ ${d.reply.user}: ${d.reply.text}</div>`:"";
-
-  let adminButtons = "";
-  if(username===ADMIN){
-    adminButtons=` <button class="admin-btn" onclick="deleteMsg('${snap.key}')">حذف</button>
-                   <button class="admin-btn" onclick="banUser('${d.user}')">حظر</button>`;
-  }
-
-  div.innerHTML = avatar + `<div class="msg-content">
-    ${replyBox}
-    <div class="user-name">${d.user===ADMIN?'👑 ':' '}${d.user}${adminButtons}</div>
-    <div>${d.text}</div>
-    <div class="time">${timeAgo(d.time)}</div>
-    <button class="reply-btn" onclick="setReply('${d.user}',\`${d.text}\`)">رد</button>
-  </div>`;
-
-  document.getElementById("messages").appendChild(div);
-  document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
-
-  if(d.user!==username) document.getElementById("notif-sound").play();
-});
-
-// =================== SET REPLY ===================
-function setReply(user,text){
-  replyTo = {user,text};
-  const display = document.getElementById("reply-display");
-  display.innerText = `↪ ${user}: ${text}`;
-  display.style.display="block";
-  document.getElementById("msg").focus();
-}
-
-// =================== DELETE & BAN ===================
-function deleteMsg(key){ chatRef.child(key).remove(); }
-function banUser(user){ bansRef.child(user).set(Date.now()); }
-
-// =================== TOP 3 USERS ===================
-statsRef.child("users").on("value",s=>{
-  if(username!==ADMIN) return;
-  let users = s.val()||{};
-  let arr = Object.keys(users).map(u=>({user:u,count:users[u]}));
-  arr.sort((a,b)=>b.count-a.count);
-  arr = arr.slice(0,3);
-  document.getElementById("stats").innerHTML = "📊 أكثر 3 مستخدمين نشطين: "+arr.map(a=>`${a.user} (${a.count})`).join(", ");
-});
-
-// =================== REGISTER SERVICE WORKER ===================
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('firebase-messaging-sw.js')
-  .then(registration => {
-    console.log('Service Worker registered:', registration);
-  }).catch(err => {
-    console.error('Service Worker registration failed:', err);
+  let t=msg.value.trim();
+  if(!t) return;
+  chatRef.push({
+    user:username,
+    text:t,
+    time:Date.now(),
+    reactions:{like:0,love:0,laugh:0,fire:0}
   });
+  msg.value="";
+}
+
+chatRef.limitToLast(200).on("child_added",snap=>{
+  let d=snap.val();
+  if(Date.now()-d.time>AUTO_DELETE_TIME){
+    snap.ref.remove();return;
+  }
+  let div=document.createElement("div");
+  div.className="msg "+(d.user===username?"me":"");
+  div.innerHTML=`
+    <div class="avatar" style="background:${color(d.user)}">${d.user[0]}</div>
+    <div class="msg-content">
+      <div class="user">${d.user}</div>
+      <div>${d.text}</div>
+      <div class="reactions">
+        <span onclick="react('${snap.key}','like')">👍 ${d.reactions?.like||0}</span>
+        <span onclick="react('${snap.key}','love')">❤️ ${d.reactions?.love||0}</span>
+        <span onclick="react('${snap.key}','laugh')">😂 ${d.reactions?.laugh||0}</span>
+        <span onclick="react('${snap.key}','fire')">🔥 ${d.reactions?.fire||0}</span>
+        ${username===ADMIN?`<span onclick="pin('${snap.key}')">📌</span>`:""}
+      </div>
+      <div class="time">${new Date(d.time).toLocaleTimeString()}</div>
+    </div>`;
+  messages.appendChild(div);
+  messages.scrollTop=messages.scrollHeight;
+});
+
+function react(k,t){
+  chatRef.child(k).child("reactions").child(t)
+  .transaction(n=>(n||0)+1);
+}
+
+function pin(k){
+  chatRef.child(k).once("value",s=>{
+    pinnedRef.set({text:s.val().text});
+  });
+}
+
+if('serviceWorker'in navigator){
+  navigator.serviceWorker.register("firebase-messaging-sw.js");
 }
 </script>
 
