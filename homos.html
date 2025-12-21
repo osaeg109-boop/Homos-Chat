@@ -13,6 +13,12 @@
 
 <style>
 *{box-sizing:border-box}
+
+html,body{
+  height:100%;
+  overflow:hidden;
+}
+
 body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial;
@@ -20,11 +26,15 @@ body{
   color:#fff;
   overscroll-behavior:none;
 }
+
+/* ===== App Container ===== */
 .chat{
   height:100dvh;
   display:flex;
   flex-direction:column;
 }
+
+/* ===== Header ===== */
 .header{
   background:#00ff88;
   color:#000;
@@ -35,12 +45,17 @@ body{
   font-weight:bold;
   position:relative;
 }
-.header img{height:34px;margin-right:8px}
+.header img{
+  height:34px;
+  margin-right:8px;
+}
 .online{
   position:absolute;
   right:10px;
   font-size:12px;
 }
+
+/* ===== Pinned Message ===== */
 #pinned{
   display:none;
   background:linear-gradient(90deg,#00ff88,#00ccff);
@@ -49,6 +64,8 @@ body{
   text-align:center;
   font-weight:bold;
 }
+
+/* ===== Messages ===== */
 #messages{
   flex:1;
   padding:10px;
@@ -67,7 +84,8 @@ body{
   to{transform:scale(1);opacity:1}
 }
 .avatar{
-  width:36px;height:36px;
+  width:36px;
+  height:36px;
   border-radius:50%;
   display:flex;
   align-items:center;
@@ -80,7 +98,6 @@ body{
   padding:8px 10px;
   border-radius:14px;
   max-width:80%;
-  position:relative;
 }
 .me .msg-content{
   background:#00ff88;
@@ -95,6 +112,8 @@ body{
   font-size:10px;
   opacity:.6;
 }
+
+/* ===== Reactions ===== */
 .reactions{
   margin-top:4px;
 }
@@ -106,6 +125,8 @@ body{
   margin-right:4px;
   cursor:pointer;
 }
+
+/* ===== Footer ===== */
 .footer{
   padding:8px;
   background:#111;
@@ -118,6 +139,8 @@ body{
   border:none;
   border-radius:12px;
   outline:none;
+  font-size:16px; /* ✅ حل مشكلة تكبير الآيفون */
+  -webkit-text-size-adjust:100%;
 }
 .footer button{
   background:#00ff88;
@@ -152,13 +175,13 @@ body{
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
-var firebaseConfig = {
+/* ===== Firebase ===== */
+firebase.initializeApp({
   apiKey: "AIzaSyBEazcwOjQFvTTvKP7C-LltEOnIlkF54x0",
   authDomain: "chat-ab546.firebaseapp.com",
   databaseURL: "https://chat-ab546-default-rtdb.firebaseio.com",
   projectId: "chat-ab546"
-};
-firebase.initializeApp(firebaseConfig);
+});
 
 const db = firebase.database();
 const chatRef = db.ref("chat");
@@ -168,23 +191,28 @@ const onlineRef = db.ref("online");
 const ADMIN = "Mohamed Homos";
 const AUTO_DELETE_TIME = 172800000; // 48 ساعة
 
+/* ===== User ===== */
 let username = localStorage.getItem("chatName");
 if(!username){
   username = prompt("اسمك؟");
   localStorage.setItem("chatName",username);
 }
 
+/* ===== Utils ===== */
 function color(n){
-  let h=0;for(let c of n)h=c.charCodeAt(0)+((h<<5)-h);
+  let h=0;
+  for(let c of n) h=c.charCodeAt(0)+((h<<5)-h);
   return `hsl(${h%360},70%,60%)`;
 }
 
+/* ===== Online ===== */
 let me = onlineRef.push(true);
 me.onDisconnect().remove();
 onlineRef.on("value",s=>{
   online.innerText=s.numChildren();
 });
 
+/* ===== Pinned ===== */
 pinnedRef.on("value",s=>{
   if(s.exists()){
     pinned.style.display="block";
@@ -192,6 +220,7 @@ pinnedRef.on("value",s=>{
   }else pinned.style.display="none";
 });
 
+/* ===== Send ===== */
 function send(){
   let t=msg.value.trim();
   if(!t) return;
@@ -204,11 +233,13 @@ function send(){
   msg.value="";
 }
 
+/* ===== Chat ===== */
 chatRef.limitToLast(200).on("child_added",snap=>{
   let d=snap.val();
   if(Date.now()-d.time>AUTO_DELETE_TIME){
-    snap.ref.remove();return;
+    snap.ref.remove(); return;
   }
+
   let div=document.createElement("div");
   div.className="msg "+(d.user===username?"me":"");
   div.innerHTML=`
@@ -217,10 +248,10 @@ chatRef.limitToLast(200).on("child_added",snap=>{
       <div class="user">${d.user}</div>
       <div>${d.text}</div>
       <div class="reactions">
-        <span onclick="react('${snap.key}','like')">👍 ${d.reactions?.like||0}</span>
-        <span onclick="react('${snap.key}','love')">❤️ ${d.reactions?.love||0}</span>
-        <span onclick="react('${snap.key}','laugh')">😂 ${d.reactions?.laugh||0}</span>
-        <span onclick="react('${snap.key}','fire')">🔥 ${d.reactions?.fire||0}</span>
+        <span onclick="react('${snap.key}','like')">👍 ${d.reactions.like}</span>
+        <span onclick="react('${snap.key}','love')">❤️ ${d.reactions.love}</span>
+        <span onclick="react('${snap.key}','laugh')">😂 ${d.reactions.laugh}</span>
+        <span onclick="react('${snap.key}','fire')">🔥 ${d.reactions.fire}</span>
         ${username===ADMIN?`<span onclick="pin('${snap.key}')">📌</span>`:""}
       </div>
       <div class="time">${new Date(d.time).toLocaleTimeString()}</div>
@@ -229,18 +260,21 @@ chatRef.limitToLast(200).on("child_added",snap=>{
   messages.scrollTop=messages.scrollHeight;
 });
 
+/* ===== Reactions ===== */
 function react(k,t){
   chatRef.child(k).child("reactions").child(t)
   .transaction(n=>(n||0)+1);
 }
 
+/* ===== Pin ===== */
 function pin(k){
   chatRef.child(k).once("value",s=>{
     pinnedRef.set({text:s.val().text});
   });
 }
 
-if('serviceWorker'in navigator){
+/* ===== Service Worker ===== */
+if('serviceWorker' in navigator){
   navigator.serviceWorker.register("firebase-messaging-sw.js");
 }
 </script>
